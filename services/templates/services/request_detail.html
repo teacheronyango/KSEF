@@ -1,0 +1,219 @@
+{% extends 'services/base.html' %}
+
+{% block title %}{{ request.title }} - KSEF{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Main Request Details -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h3 class="mb-0">{{ request.title }}</h3>
+                        <div>
+                            <span class="badge bg-{{ request.priority|yesno:'danger,warning,info' }} rounded-pill me-1">
+                                {{ request.get_priority_display }}
+                            </span>
+                            <span class="badge bg-{{ request.status|yesno:'success,warning,info,secondary' }} rounded-pill">
+                                {{ request.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-person-fill me-2"></i>Requested by:
+                            </h6>
+                            <p class="mb-3">{{ request.requester.get_full_name|default:request.requester.username }}</p>
+
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-tag-fill me-2"></i>Category:
+                            </h6>
+                            <p class="mb-3">{{ request.category.name }}</p>
+
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-geo-alt-fill me-2"></i>Location:
+                            </h6>
+                            <p class="mb-3">{{ request.location }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-calendar-fill me-2"></i>Posted:
+                            </h6>
+                            <p class="mb-3">{{ request.created_at|date:"F j, Y g:i A" }}</p>
+
+                            {% if request.estimated_time %}
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-clock-fill me-2"></i>Estimated Time:
+                            </h6>
+                            <p class="mb-3">{{ request.estimated_time }}</p>
+                            {% endif %}
+
+                            {% if request.volunteer %}
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-person-check-fill me-2"></i>Volunteer:
+                            </h6>
+                            <p class="mb-3 text-success fw-bold">
+                                {{ request.volunteer.get_full_name|default:request.volunteer.username }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-file-text-fill me-2"></i>Description:
+                    </h6>
+                    <div class="bg-light p-3 rounded mb-4">
+                        <p class="mb-0" style="white-space: pre-line;">{{ request.description }}</p>
+                    </div>
+
+                    {% if request.contact_info and user.is_authenticated %}
+                        {% if user == request.volunteer or user == request.requester or user_profile.user_type == 'admin' %}
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-telephone-fill me-2"></i>Contact Information:
+                            </h6>
+                            <p class="mb-0">{{ request.contact_info }}</p>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Request Timeline
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Request Posted</h6>
+                                <small class="text-muted">{{ request.created_at|date:"F j, Y g:i A" }}</small>
+                            </div>
+                        </div>
+
+                        {% if request.volunteer %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-warning"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Volunteer Assigned</h6>
+                                <p class="mb-1">{{ request.volunteer.get_full_name|default:request.volunteer.username }} accepted this request</p>
+                                <small class="text-muted">{{ request.updated_at|date:"F j, Y g:i A" }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if request.status == 'completed' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Request Completed</h6>
+                                <small class="text-muted">{{ request.completed_at|date:"F j, Y g:i A" }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Panel -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 sticky-top" style="top: 100px;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-hand-thumbs-up-fill me-2"></i>Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                        {% if user_profile.user_type == 'volunteer' and request.status == 'open' and user != request.requester %}
+                            <!-- Volunteer can accept request -->
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="volunteer">
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg mb-3">
+                                        <i class="bi bi-hand-thumbs-up-fill me-2"></i>Volunteer to Help
+                                    </button>
+                                </div>
+                            </form>
+                            <div class="alert alert-info">
+                                <small>
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    By volunteering, you commit to helping with this request.
+                                </small>
+                            </div>
+                        {% elif user == request.volunteer and request.status in 'assigned,in_progress' %}
+                            <!-- Volunteer can mark as complete -->
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="complete">
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg mb-3">
+                                        <i class="bi bi-check-circle-fill me-2"></i>Mark as Completed
+                                    </button>
+                                </div>
+                            </form>
+                            <div class="alert alert-warning">
+                                <small>
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    Only mark as complete when the task is finished.
+                                </small>
+                            </div>
+                        {% elif user == request.requester and request.status == 'open' %}
+                            <!-- Requester can cancel -->
+                            <form method="post" onsubmit="return confirm('Are you sure you want to cancel this request?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="cancel">
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-danger btn-lg mb-3">
+                                        <i class="bi bi-x-circle-fill me-2"></i>Cancel Request
+                                    </button>
+                                </div>
+                            </form>
+                        {% endif %}
+
+                        {% if request.status == 'completed' %}
+                            <div class="text-center">
+                                <i class="bi bi-check-circle-fill text-success display-3 mb-3"></i>
+                                <h6 class="text-success">Request Completed!</h6>
+                                <p class="text-muted">Thank you for using KSEF</p>
+                            </div>
+                        {% elif request.status == 'cancelled' %}
+                            <div class="text-center">
+                                <i class="bi bi-x-circle-fill text-danger display-3 mb-3"></i>
+                                <h6 class="text-danger">Request Cancelled</h6>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center">
+                            <i class="bi bi-person-plus-fill display-4 text-muted mb-3"></i>
+                            <p class="text-muted mb-3">Login to volunteer or post requests</p>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+                                <a href="{% url 'register' %}" class="btn btn-outline-primary">Register</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-grid">
+                        <a href="{% url 'request_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Back to All Requests
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

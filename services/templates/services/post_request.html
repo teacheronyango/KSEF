@@ -1,0 +1,73 @@
+{% extends 'services/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Post Service Request - KSEF{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h3 class="mb-0">
+                        <i class="bi bi-plus-circle-fill me-2"></i>Post Service Request
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Fill out the form below to request help from community volunteers. Be as specific as possible to get the best assistance.
+                    </p>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.category|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        {{ form.description|as_crispy_field }}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.priority|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.estimated_time|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.location|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.contact_info|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-shield-check me-2"></i>
+                            <strong>Privacy Note:</strong> Your contact information will only be shared with volunteers who accept your request.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-send-fill me-2"></i>Post Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

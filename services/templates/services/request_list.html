@@ -1,0 +1,167 @@
+{% extends 'services/base.html' %}
+
+{% block title %}All Service Requests - KSEF{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm border-0 sticky-top" style="top: 100px;">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-funnel-fill me-2"></i>Filter Requests
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="filterForm">
+                        <!-- Search -->
+                        <div class="mb-3">
+                            <label for="search" class="form-label">Search:</label>
+                            <input type="text" class="form-control" name="search" id="search"
+                                   value="{{ search_query }}" placeholder="Search requests...">
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category:</label>
+                            <select name="category" id="category" class="form-select">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category.pk }}"
+                                        {% if selected_category == category.pk|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status:</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="open" {% if selected_status == 'open' %}selected{% endif %}>Open</option>
+                                <option value="assigned" {% if selected_status == 'assigned' %}selected{% endif %}>Assigned</option>
+                                <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-2"></i>Apply Filters
+                            </button>
+                            <a href="{% url 'request_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Clear Filters
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requests List -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="bi bi-list-task me-2"></i>Service Requests
+                    <span class="badge bg-secondary">{{ requests.count }}</span>
+                </h2>
+                {% if user.is_authenticated %}
+                <a href="{% url 'post_request' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Post New Request
+                </a>
+                {% endif %}
+            </div>
+
+            {% if requests %}
+                <div class="row g-4">
+                    {% for request in requests %}
+                    <div class="col-md-6 col-xl-4">
+                        <div class="card h-100 shadow-sm border-0 request-card">
+                            <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge bg-{{ request.priority|yesno:'danger,warning,info' }} rounded-pill">
+                                        {{ request.get_priority_display }}
+                                    </span>
+                                    <span class="badge bg-{{ request.status|yesno:'success,warning,info,secondary' }} rounded-pill ms-1">
+                                        {{ request.get_status_display }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">{{ request.created_at|timesince }} ago</small>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">{{ request.title|truncatechars:50 }}</h5>
+                                <p class="card-text text-muted">{{ request.description|truncatechars:120 }}</p>
+
+                                <div class="request-meta mb-3">
+                                    <small class="d-block text-muted mb-1">
+                                        <i class="bi bi-tag me-1"></i>{{ request.category.name }}
+                                    </small>
+                                    <small class="d-block text-muted mb-1">
+                                        <i class="bi bi-geo-alt me-1"></i>{{ request.location|truncatechars:40 }}
+                                    </small>
+                                    {% if request.estimated_time %}
+                                    <small class="d-block text-muted mb-1">
+                                        <i class="bi bi-clock me-1"></i>{{ request.estimated_time }}
+                                    </small>
+                                    {% endif %}
+                                    <small class="d-block text-muted">
+                                        <i class="bi bi-person me-1"></i>{{ request.requester.get_full_name|default:request.requester.username }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    {% if request.volunteer %}
+                                        <small class="text-success">
+                                            <i class="bi bi-person-check me-1"></i>{{ request.volunteer.get_full_name|default:request.volunteer.username }}
+                                        </small>
+                                    {% else %}
+                                        <small class="text-muted">
+                                            <i class="bi bi-person-x me-1"></i>No volunteer assigned
+                                        </small>
+                                    {% endif %}
+                                    <a href="{% url 'request_detail' request.pk %}" class="btn btn-sm btn-primary">
+                                        View Details <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+                    <h3 class="text-muted">No requests found</h3>
+                    <p class="text-muted">Try adjusting your filters or check back later.</p>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'post_request' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle-fill me-2"></i>Post the First Request
+                    </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filters change
+    const filterInputs = document.querySelectorAll('#filterForm select, #filterForm input');
+    filterInputs.forEach(input => {
+        if (input.type !== 'submit') {
+            input.addEventListener('change', function() {
+                // Small delay for better UX
+                setTimeout(() => {
+                    document.getElementById('filterForm').submit();
+                }, 300);
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

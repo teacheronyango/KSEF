@@ -1,0 +1,318 @@
+/* KSEF Custom Styles */
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --success-color: #198754;
+  --info-color: #0dcaf0;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-color: #f8f9fa;
+  --dark-color: #212529;
+}
+
+/* Global Styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  line-height: 1.6;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0056b3;
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin: 0;
+}
+
+.hero-image {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Card Animations */
+.card {
+  transition: all 0.3s ease;
+  border: none !important;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.category-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2) !important;
+}
+
+.request-card {
+  border-left: 4px solid var(--primary-color) !important;
+  transition: all 0.3s ease;
+}
+
+.request-card:hover {
+  border-left-color: var(--success-color) !important;
+  transform: translateY(-3px);
+}
+
+/* Step Numbers */
+.step-number {
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Timeline */
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--primary-color);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 30px;
+  padding-left: 30px;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -22px;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 0 3px var(--light-color);
+}
+
+.timeline-content h6 {
+  margin-bottom: 5px;
+  color: var(--primary-color);
+}
+
+/* Badges */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.5em 0.75em;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+}
+
+/* Navigation */
+.navbar-brand {
+  font-size: 1.5rem;
+}
+
+.nav-link {
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Forms */
+.form-control, .form-select {
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--dark-color);
+}
+
+/* Alerts */
+.alert {
+  border-radius: 10px;
+  border: none;
+  font-weight: 500;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Request Meta */
+.request-meta {
+  border-left: 3px solid var(--info-color);
+  padding-left: 15px;
+  background-color: rgba(13, 202, 240, 0.1);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 15px;
+}
+
+/* Sticky Elements */
+.sticky-top {
+  position: -webkit-sticky;
+  position: sticky;
+  z-index: 1020;
+}
+
+/* Loading Animation */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-section {
+    text-align: center;
+  }
+  
+  .display-4 {
+    font-size: 2.5rem;
+  }
+  
+  .step-number {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+  
+  .timeline {
+    padding-left: 20px;
+  }
+  
+  .timeline-item {
+    padding-left: 20px;
+  }
+  
+  .timeline-marker {
+    left: -17px;
+  }
+}
+
+@media (max-width: 576px) {
+  .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .btn-lg {
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+  
+  .card {
+    background-color: #2d2d2d;
+    color: #ffffff;
+  }
+  
+  .form-control, .form-select {
+    background-color: #3d3d3d;
+    color: #ffffff;
+    border-color: #555555;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    background-color: #3d3d3d;
+    color: #ffffff;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .navbar
