@@ -1,6 +1,6 @@
 {% extends 'services/base.html' %}
 
-{% block title %}All Service Requests - KSEF{% endblock %}
+{% block title %}{{ page_title }} - KSEF{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -36,7 +36,8 @@
                             </select>
                         </div>
 
-                        <!-- Status Filter -->
+                        <!-- Status Filter - Hide for non-authenticated users -->
+                        {% if user.is_authenticated %}
                         <div class="mb-3">
                             <label for="status" class="form-label">Status:</label>
                             <select name="status" id="status" class="form-select">
@@ -47,6 +48,12 @@
                                 <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
                             </select>
                         </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Login to see all request statuses.
+                        </div>
+                        {% endif %}
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
@@ -64,13 +71,23 @@
         <!-- Requests List -->
         <div class="col-lg-9">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>
-                    <i class="bi bi-list-task me-2"></i>Service Requests
-                    <span class="badge bg-secondary">{{ requests.count }}</span>
-                </h2>
-                {% if user.is_authenticated %}
+                <div>
+                    <h2>
+                        <i class="bi bi-list-task me-2"></i>{{ page_title }}
+                        <span class="badge bg-secondary">{{ requests.count }}</span>
+                    </h2>
+                    <!-- Information message -->
+                    <div class="alert alert-info py-2 mt-2 mb-0" style="font-size: 0.9rem;">
+                        <i class="bi bi-info-circle-fill me-2"></i>{{ info_message }}
+                    </div>
+                </div>
+                {% if user.is_authenticated and user_profile and user_profile.user_type == 'requester' %}
                 <a href="{% url 'post_request' %}" class="btn btn-primary">
                     <i class="bi bi-plus-circle-fill me-2"></i>Post New Request
+                </a>
+                {% elif not user.is_authenticated %}
+                <a href="{% url 'login' %}" class="btn btn-primary">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login to Post Request
                 </a>
                 {% endif %}
             </div>
@@ -82,12 +99,27 @@
                         <div class="card h-100 shadow-sm border-0 request-card">
                             <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-start">
                                 <div>
-                                    <span class="badge bg-{{ request.priority|yesno:'danger,warning,info' }} rounded-pill">
-                                        {{ request.get_priority_display }}
-                                    </span>
-                                    <span class="badge bg-{{ request.status|yesno:'success,warning,info,secondary' }} rounded-pill ms-1">
-                                        {{ request.get_status_display }}
-                                    </span>
+                                    <!-- Priority Badge -->
+                                    {% if request.priority == 'high' %}
+                                        <span class="badge bg-danger rounded-pill">High Priority</span>
+                                    {% elif request.priority == 'medium' %}
+                                        <span class="badge bg-warning rounded-pill">Medium Priority</span>
+                                    {% else %}
+                                        <span class="badge bg-info rounded-pill">Low Priority</span>
+                                    {% endif %}
+                                    
+                                    <!-- Status Badge -->
+                                    {% if request.status == 'open' %}
+                                        <span class="badge bg-success rounded-pill ms-1">Open</span>
+                                    {% elif request.status == 'assigned' %}
+                                        <span class="badge bg-warning rounded-pill ms-1">Assigned</span>
+                                    {% elif request.status == 'in_progress' %}
+                                        <span class="badge bg-info rounded-pill ms-1">In Progress</span>
+                                    {% elif request.status == 'completed' %}
+                                        <span class="badge bg-secondary rounded-pill ms-1">Completed</span>
+                                    {% else %}
+                                        <span class="badge bg-dark rounded-pill ms-1">{{ request.status|title }}</span>
+                                    {% endif %}
                                 </div>
                                 <small class="text-muted">{{ request.created_at|timesince }} ago</small>
                             </div>
@@ -123,9 +155,15 @@
                                             <i class="bi bi-person-x me-1"></i>No volunteer assigned
                                         </small>
                                     {% endif %}
+                                    {% if user.is_authenticated %}
                                     <a href="{% url 'request_detail' request.pk %}" class="btn btn-sm btn-primary">
                                         View Details <i class="bi bi-arrow-right ms-1"></i>
                                     </a>
+                                    {% else %}
+                                    <a href="{% url 'login' %}" class="btn btn-sm btn-primary">
+                                        Login to View <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -136,10 +174,22 @@
                 <div class="text-center py-5">
                     <i class="bi bi-inbox display-1 text-muted mb-3"></i>
                     <h3 class="text-muted">No requests found</h3>
-                    <p class="text-muted">Try adjusting your filters or check back later.</p>
-                    {% if user.is_authenticated %}
+                    <p class="text-muted">
+                        {% if user.is_authenticated and user_profile and user_profile.user_type == 'volunteer' %}
+                            There are currently no service requests in the community.
+                        {% elif user.is_authenticated and user_profile %}
+                            You haven't posted any service requests yet.
+                        {% else %}
+                            There are currently no open service requests in the community.
+                        {% endif %}
+                    </p>
+                    {% if user.is_authenticated and user_profile and user_profile.user_type == 'requester' %}
                     <a href="{% url 'post_request' %}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle-fill me-2"></i>Post the First Request
+                        <i class="bi bi-plus-circle-fill me-2"></i>Post Your First Request
+                    </a>
+                    {% elif not user.is_authenticated %}
+                    <a href="{% url 'register' %}" class="btn btn-primary">
+                        <i class="bi bi-person-plus-fill me-2"></i>Join Community
                     </a>
                     {% endif %}
                 </div>
