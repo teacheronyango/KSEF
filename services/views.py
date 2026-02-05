@@ -8,16 +8,48 @@ from .forms import CustomUserCreationForm, ServiceRequestForm
 from .models import ServiceRequest, ServiceCategory, UserProfile
 
 def home(request):
-    recent_requests = ServiceRequest.objects.filter(status='open')[:6]
     total_requests = ServiceRequest.objects.count()
     completed_requests = ServiceRequest.objects.filter(status='completed').count()
     active_volunteers = UserProfile.objects.filter(user_type='volunteer').count()
+
+    # Initialize recent_requests as empty
+    recent_requests = ServiceRequest.objects.none()
+    recent_requests_title = "Recent Community Requests"
+
+    # Check if user is authenticated
+    if request.user.is_authenticated:
+        try:
+            user_profile = UserProfile.objects.get(user=request.user)
+
+            # Define privileged users who can see all requests
+            privileged_users = ['volunteer', 'ngo', 'admin']
+            
+            if user_profile.user_type in privileged_users:
+                # Volunteers, NGO, and Admin can see all open requests
+                recent_requests = ServiceRequest.objects.filter(status='open')[:6]
+                recent_requests_title = "Recent Open Requests"
+            else:
+                # Community members can only see their own recent requests
+                recent_requests = ServiceRequest.objects.filter(
+                    requester=request.user
+                ).order_by('-created_at')[:6]
+                recent_requests_title = "My Recent Requests"
+        except UserProfile.DoesNotExist:
+            # If user profile doesn't exist, show no recent requests
+            recent_requests = ServiceRequest.objects.none()
+            recent_requests_title = "Recent Community Requests"
+    else:
+        # Non-authenticated users see no recent requests
+        recent_requests = ServiceRequest.objects.none()
+        recent_requests_title = "Recent Community Requests"
 
     context = {
         'recent_requests': recent_requests,
         'total_requests': total_requests,
         'completed_requests': completed_requests,
         'active_volunteers': active_volunteers,
+        'recent_requests_title': recent_requests_title,
+        'user': request.user,  # Pass user to template
     }
     return render(request, 'services/index.html', context)
 
@@ -37,25 +69,40 @@ def register(request):
 def dashboard(request):
     user_profile = UserProfile.objects.get(user=request.user)
 
-    if user_profile.user_type == 'volunteer':
+    # Define privileged users who can see all requests
+    privileged_users = ['volunteer', 'ngo', 'admin']
+    
+    if user_profile.user_type in privileged_users:
         my_assignments = ServiceRequest.objects.filter(volunteer=request.user)
         available_requests = ServiceRequest.objects.filter(status='open')[:10]
         context = {
             'user_profile': user_profile,
             'my_assignments': my_assignments,
             'available_requests': available_requests,
+            'is_privileged_user': True,
         }
     else:
         my_requests = ServiceRequest.objects.filter(requester=request.user)
         context = {
             'user_profile': user_profile,
             'my_requests': my_requests,
+            'is_privileged_user': False,
         }
 
     return render(request, 'services/dashboard.html', context)
 
 @login_required
 def post_request(request):
+    # Only community members (non-volunteers, non-NGO, non-admin) can post requests
+    user_profile = UserProfile.objects.get(user=request.user)
+    
+    # Define users who cannot post requests
+    non_requesters = ['volunteer', 'ngo', 'admin']
+    
+    if user_profile.user_type in non_requesters:
+        messages.error(request, 'Volunteers, NGO staff, and administrators cannot post service requests.')
+        return redirect('request_list')
+
     if request.method == 'POST':
         form = ServiceRequestForm(request.POST)
         if form.is_valid():
@@ -68,8 +115,27 @@ def post_request(request):
         form = ServiceRequestForm()
     return render(request, 'services/post_request.html', {'form': form})
 
+@login_required
 def request_list(request):
-    requests = ServiceRequest.objects.all()
+    # Get user profile to check user type
+    user_profile = UserProfile.objects.get(user=request.user)
+
+    # Define privileged users who can see all requests
+    privileged_users = ['volunteer', 'ngo', 'admin']
+    
+    # Apply filters based on user type
+    if user_profile.user_type in privileged_users:
+        # Volunteers, NGO, and Admin can see all requests
+        requests = ServiceRequest.objects.all()
+        page_title = "All Community Service Requests"
+        info_message = f"You are viewing all community service requests as a {user_profile.get_user_type_display()}."
+    else:
+        # Community members can only see their own requests
+        requests = ServiceRequest.objects.filter(requester=request.user)
+        page_title = "My Service Requests"
+        info_message = "You are viewing your own service requests."
+
+    # Apply filters
     category_filter = request.GET.get('category')
     status_filter = request.GET.get('status')
     search_query = request.GET.get('search')
@@ -91,6 +157,10 @@ def request_list(request):
         'selected_category': category_filter,
         'selected_status': status_filter,
         'search_query': search_query,
+        'user_profile': user_profile,  # Pass user profile to template
+        'page_title': page_title,  # Pass page title
+        'info_message': info_message,  # Pass info message
+        'is_privileged_user': user_profile.user_type in privileged_users,
     }
     return render(request, 'services/request_list.html', context)
 
@@ -98,6 +168,14 @@ def request_list(request):
 def request_detail(request, pk):
     service_request = get_object_or_404(ServiceRequest, pk=pk)
     user_profile = UserProfile.objects.get(user=request.user)
+
+    # Define privileged users who can see all requests
+    privileged_users = ['volunteer', 'ngo', 'admin']
+    
+    # Check if user has permission to view this request
+    if user_profile.user_type not in privileged_users and service_request.requester != request.user:
+        messages.error(request, 'You do not have permission to view this request.')
+        return redirect('request_list')
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -127,5 +205,6 @@ def request_detail(request, pk):
     context = {
         'request': service_request,
         'user_profile': user_profile,
+        'is_privileged_user': user_profile.user_type in privileged_users,
     }
     return render(request, 'services/request_detail.html', context)
